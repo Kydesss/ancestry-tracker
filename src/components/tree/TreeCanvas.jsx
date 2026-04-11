@@ -297,6 +297,8 @@ export default function TreeCanvas({ onEdit, onAddPartner, onAddChild, reactFlow
     try {
       const token = await getToken({ template: 'supabase' })
       const client = getAuthenticatedClient(token)
+
+      // Create the primary relationship
       const { data, error } = await client
         .from('relationships')
         .insert({ tree_id: activeTree.id, from_member_id: sourceId, to_member_id: targetId, type: relType })
@@ -304,10 +306,44 @@ export default function TreeCanvas({ onEdit, onAddPartner, onAddChild, reactFlow
         .single()
       if (error) throw error
       addRelationship(data)
+
+      // When two existing people become partners, cross-link their children so
+      // the family node shows correctly and neither side loses their parent link.
+      if (relType === 'partner') {
+        await syncPartnerChildren(client, sourceId, targetId)
+      }
+
       showToast('Connection added.', 'success')
     } catch {
       showToast('Failed to connect people. Please try again.', 'error')
     }
+  }
+
+  // After a partner relationship is created between A and B:
+  // • give B parent-of status for each child A already has
+  // • give A parent-of status for each child B already has
+  async function syncPartnerChildren(client, aId, bId) {
+    const aChildren = relationships.filter((r) => r.type === 'child' && r.from_member_id === aId)
+    const bChildren = relationships.filter((r) => r.type === 'child' && r.from_member_id === bId)
+
+    const toInsert = []
+
+    for (const r of aChildren) {
+      const missing = !relationships.some((x) => x.type === 'child' && x.from_member_id === bId && x.to_member_id === r.to_member_id)
+      if (missing) toInsert.push({ tree_id: activeTree.id, from_member_id: bId, to_member_id: r.to_member_id, type: 'child' })
+    }
+    for (const r of bChildren) {
+      const missing = !relationships.some((x) => x.type === 'child' && x.from_member_id === aId && x.to_member_id === r.to_member_id)
+      if (missing) toInsert.push({ tree_id: activeTree.id, from_member_id: aId, to_member_id: r.to_member_id, type: 'child' })
+    }
+
+    if (!toInsert.length) return
+
+    const { data: newRels, error } = await client
+      .from('relationships')
+      .insert(toInsert)
+      .select()
+    if (!error && newRels) newRels.forEach((r) => addRelationship(r))
   }
 
   async function handleDelete(member) {

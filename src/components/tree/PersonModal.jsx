@@ -141,9 +141,8 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
             .single()
           if (!relError && relData) addRelationship(relData)
 
-          // If adding a child and the parent has a partner, also link the child
-          // to that partner so both parents share the child (enables the family node)
           if (form.relationshipType === 'child') {
+            // Adding a child: also link child to parentMember's existing partner
             const partnerRel = relationships.find(
               (r) =>
                 r.type === 'partner' &&
@@ -154,17 +153,29 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
                 partnerRel.from_member_id === parentMember.id
                   ? partnerRel.to_member_id
                   : partnerRel.from_member_id
-              const { data: partnerRelData, error: partnerRelError } = await client
+              const { data: pRel } = await client
                 .from('relationships')
-                .insert({
-                  tree_id: activeTree.id,
-                  from_member_id: partnerId,
-                  to_member_id: data.id,
-                  type: 'child',
-                })
-                .select()
-                .single()
-              if (!partnerRelError && partnerRelData) addRelationship(partnerRelData)
+                .insert({ tree_id: activeTree.id, from_member_id: partnerId, to_member_id: data.id, type: 'child' })
+                .select().single()
+              if (pRel) addRelationship(pRel)
+            }
+          } else if (form.relationshipType === 'partner') {
+            // Adding a partner: link the new partner to all existing children of parentMember,
+            // and link parentMember to all existing children of the new partner (none yet, but
+            // future-proof). This ensures the family node appears immediately.
+            const existingChildren = relationships
+              .filter((r) => r.type === 'child' && r.from_member_id === parentMember.id)
+            for (const childRel of existingChildren) {
+              const alreadyLinked = relationships.some(
+                (r) => r.type === 'child' && r.from_member_id === data.id && r.to_member_id === childRel.to_member_id
+              )
+              if (!alreadyLinked) {
+                const { data: newRel } = await client
+                  .from('relationships')
+                  .insert({ tree_id: activeTree.id, from_member_id: data.id, to_member_id: childRel.to_member_id, type: 'child' })
+                  .select().single()
+                if (newRel) addRelationship(newRel)
+              }
             }
           }
         }

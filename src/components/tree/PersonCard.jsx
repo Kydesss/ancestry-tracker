@@ -9,9 +9,11 @@ function PersonCard({ data }) {
 
   return (
     <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-card hover:shadow-card-hover transition-shadow w-52 relative group">
-      {/* React Flow handles */}
-      <Handle type="target" position={Position.Top} className="!bg-gray-300 !w-2.5 !h-2.5" />
-      <Handle type="source" position={Position.Bottom} className="!bg-gray-300 !w-2.5 !h-2.5" />
+      {/* React Flow handles — all four sides so any card can connect to any other */}
+      <Handle type="target" position={Position.Top} className="!bg-gray-300 !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Handle type="source" position={Position.Bottom} className="!bg-gray-300 !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Handle type="source" position={Position.Left} className="!bg-gray-300 !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Handle type="target" position={Position.Right} className="!bg-gray-300 !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
 
       <div className="p-4">
         {/* Avatar + name */}

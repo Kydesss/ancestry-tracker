@@ -26,6 +26,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
   const addRelationship = useStore((s) => s.addRelationship)
   const showToast = useStore((s) => s.showToast)
   const members = useStore((s) => s.members)
+  const relationships = useStore((s) => s.relationships)
   const { checkAccess, FREE_MEMBER_LIMIT } = useSubscription()
 
   const isEdit = !!editMember
@@ -139,6 +140,33 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
             .select()
             .single()
           if (!relError && relData) addRelationship(relData)
+
+          // If adding a child and the parent has a partner, also link the child
+          // to that partner so both parents share the child (enables the family node)
+          if (form.relationshipType === 'child') {
+            const partnerRel = relationships.find(
+              (r) =>
+                r.type === 'partner' &&
+                (r.from_member_id === parentMember.id || r.to_member_id === parentMember.id)
+            )
+            if (partnerRel) {
+              const partnerId =
+                partnerRel.from_member_id === parentMember.id
+                  ? partnerRel.to_member_id
+                  : partnerRel.from_member_id
+              const { data: partnerRelData, error: partnerRelError } = await client
+                .from('relationships')
+                .insert({
+                  tree_id: activeTree.id,
+                  from_member_id: partnerId,
+                  to_member_id: data.id,
+                  type: 'child',
+                })
+                .select()
+                .single()
+              if (!partnerRelError && partnerRelData) addRelationship(partnerRelData)
+            }
+          }
         }
 
         showToast(`${data.name} added to tree.`, 'success')

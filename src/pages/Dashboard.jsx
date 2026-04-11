@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import { useSearchParams } from 'react-router-dom'
 import { useReactFlow, ReactFlowProvider } from 'reactflow'
@@ -16,15 +16,19 @@ function DashboardInner() {
   const { getToken } = useAuth()
   const [searchParams] = useSearchParams()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [treeLoading, setTreeLoading] = useState(true)
+  const [bootstrapError, setBootstrapError] = useState(null)
 
   const [modalState, setModalState] = useState({
     isOpen: false,
     editMember: null,
     relationshipType: null,
     parentMember: null,
+    spawnPosition: null,
   })
 
   const reactFlowRef = useRef(null)
+  const { screenToFlowPosition } = useReactFlow()
 
   const setUser = useStore((s) => s.setUser)
   const setSubscriptionTier = useStore((s) => s.setSubscriptionTier)
@@ -51,8 +55,12 @@ function DashboardInner() {
   }, [searchParams]) // eslint-disable-line
 
   async function bootstrap() {
+    setTreeLoading(true)
+    setBootstrapError(null)
     try {
       const token = await getToken({ template: 'supabase' })
+      if (!token) throw new Error('Could not get Supabase token from Clerk. Make sure the "supabase" JWT template exists in your Clerk dashboard.')
+
       const client = getAuthenticatedClient(token)
 
       // Upsert user row
@@ -60,25 +68,27 @@ function DashboardInner() {
         { id: user.id, email: user.primaryEmailAddress?.emailAddress || '' },
         { onConflict: 'id', ignoreDuplicates: false }
       )
-      if (upsertErr) console.error('upsert user', upsertErr)
+      if (upsertErr) throw new Error(`User sync failed: ${upsertErr.message}`)
 
       // Fetch subscription tier
       const { data: userData } = await client.from('users').select('subscription_tier').eq('id', user.id).single()
       if (userData) setSubscriptionTier(userData.subscription_tier)
 
       // Fetch or create the user's first tree
-      let { data: trees } = await client.from('trees').select('*').eq('owner_id', user.id).order('created_at').limit(1)
+      const { data: trees, error: treesErr } = await client.from('trees').select('*').eq('owner_id', user.id).order('created_at').limit(1)
+      if (treesErr) throw new Error(`Failed to fetch trees: ${treesErr.message}`)
+
       let tree = trees?.[0]
       if (!tree) {
-        const { data: newTree } = await client
+        const { data: newTree, error: insertErr } = await client
           .from('trees')
           .insert({ owner_id: user.id, name: `${user.firstName || 'My'}'s Family Tree` })
           .select()
           .single()
+        if (insertErr) throw new Error(`Failed to create tree: ${insertErr.message}`)
         tree = newTree
       }
 
-      if (!tree) return
       setActiveTree(tree)
 
       // Fetch members + relationships
@@ -89,8 +99,10 @@ function DashboardInner() {
       setMembers(members || [])
       setRelationships(rels || [])
     } catch (err) {
-      console.error('bootstrap error', err)
-      showToast('Failed to load your tree. Please refresh.', 'error')
+      console.error('[bootstrap]', err)
+      setBootstrapError(err.message)
+    } finally {
+      setTreeLoading(false)
     }
   }
 
@@ -104,13 +116,18 @@ function DashboardInner() {
   }
 
   function openAddModal({ relationshipType = null, parentMember = null } = {}) {
+    // Spawn new card at the center of what the user is currently viewing
+    const spawnPosition = screenToFlowPosition({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    })
     if (relationshipType === null) {
       // Adding root person — check member limit
       if (!requirePremium('add_member', () => {
-        setModalState({ isOpen: true, editMember: null, relationshipType: null, parentMember: null })
+        setModalState({ isOpen: true, editMember: null, relationshipType: null, parentMember: null, spawnPosition })
       })) return
     }
-    setModalState({ isOpen: true, editMember: null, relationshipType, parentMember })
+    setModalState({ isOpen: true, editMember: null, relationshipType, parentMember, spawnPosition })
   }
 
   function openEditModal(member) {
@@ -155,10 +172,36 @@ function DashboardInner() {
           onAddRoot={() => openAddModal()}
           onZoomIn={() => {/* handled inside ReactFlow via Controls */}}
           onZoomOut={() => {}}
+          disabled={treeLoading || !activeTree}
         />
 
         {/* Canvas */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden relative">
+          {treeLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+              <div className="flex flex-col items-center gap-3 text-gray-400">
+                <svg className="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                <span className="text-sm">Loading your tree…</span>
+              </div>
+            </div>
+          )}
+          {bootstrapError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10 p-6">
+              <div className="bg-white rounded-2xl shadow-card border border-red-100 p-6 max-w-md w-full text-center">
+                <div className="text-3xl mb-3">⚠️</div>
+                <h3 className="font-semibold text-gray-900 mb-2">Failed to load tree</h3>
+                <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4 text-left font-mono break-all">
+                  {bootstrapError}
+                </p>
+                <button onClick={bootstrap} className="btn-primary">
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
           <TreeCanvas
             onEdit={openEditModal}
             onAddPartner={(member) => openAddModal({ relationshipType: 'partner', parentMember: member })}
@@ -175,6 +218,7 @@ function DashboardInner() {
         editMember={modalState.editMember}
         relationshipType={modalState.relationshipType}
         parentMember={modalState.parentMember}
+        spawnPosition={modalState.spawnPosition}
       />
       <UpgradeModal />
     </div>

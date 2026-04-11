@@ -1,7 +1,7 @@
 import { useSubscription } from '../../hooks/useSubscription'
 import useStore from '../../store/useStore'
 
-export default function Toolbar({ onAddRoot, onZoomIn, onZoomOut }) {
+export default function Toolbar({ onAddRoot, onZoomIn, onZoomOut, disabled = false }) {
   const { requirePremium } = useSubscription()
   const setShowUpgradeModal = useStore((s) => s.setShowUpgradeModal)
   const setUpgradeFeature = useStore((s) => s.setUpgradeFeature)
@@ -16,7 +16,7 @@ export default function Toolbar({ onAddRoot, onZoomIn, onZoomOut }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white flex-wrap gap-2 flex-shrink-0">
       <div className="flex items-center gap-2">
-        <button onClick={onAddRoot} className="btn-primary text-sm">
+        <button onClick={onAddRoot} disabled={disabled} className="btn-primary text-sm">
           <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
           </svg>

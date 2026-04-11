@@ -57,11 +57,11 @@ npm run dev
 1. Create a free account at [clerk.com](https://clerk.com)
 2. Create a new application
 3. Copy the **Publishable Key** into `VITE_CLERK_PUBLISHABLE_KEY`
-4. In **JWT Templates**, create a template named `supabase` with the following claims:
+4. In **JWT Templates**, create a template named `supabase` with an **empty body**:
    ```json
-   { "sub": "{{user.id}}" }
+   {}
    ```
-   This token is passed to Supabase as the `Authorization` header for RLS.
+   Clerk automatically includes `sub` (set to the Clerk user ID) in every JWT — do **not** add it manually or you'll get a "reserved claim" error. This token is passed to Supabase as the `Authorization` header for RLS.
 
 ---
 

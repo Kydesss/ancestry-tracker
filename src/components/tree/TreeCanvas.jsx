@@ -59,9 +59,16 @@ export default function TreeCanvas({ onEdit, onAddPartner, onAddChild, reactFlow
   const [nodes, setNodes, onNodesChange] = useNodesState(membersToNodes(members, callbacks))
   const [edges, setEdges, onEdgesChange] = useEdgesState(relationshipsToEdges(relationships))
 
-  // Sync nodes/edges when store changes
+  // Sync nodes/edges when store changes — preserve positions of existing nodes
+  // so that dragging a card doesn't get reset when a new member is added
   useEffect(() => {
-    setNodes(membersToNodes(members, { onEdit, onAddPartner, onAddChild, onDelete: handleDelete }))
+    setNodes((currentNodes) => {
+      const posMap = Object.fromEntries(currentNodes.map((n) => [n.id, n.position]))
+      return membersToNodes(members, { onEdit, onAddPartner, onAddChild, onDelete: handleDelete }).map((n) => ({
+        ...n,
+        position: posMap[n.id] ?? n.position,
+      }))
+    })
   }, [members]) // eslint-disable-line
 
   useEffect(() => {

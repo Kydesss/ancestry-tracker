@@ -14,7 +14,7 @@ const defaultForm = {
   relationshipType: 'child',
 }
 
-export default function PersonModal({ isOpen, onClose, editMember, relationshipType, parentMember }) {
+export default function PersonModal({ isOpen, onClose, editMember, relationshipType, parentMember, spawnPosition }) {
   const [form, setForm] = useState({ ...defaultForm, relationshipType: relationshipType || 'child' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -66,6 +66,11 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
     e.preventDefault()
     if (!form.name || !form.dob) return
 
+    if (!activeTree) {
+      setError('Tree is still loading — please wait a moment and try again.')
+      return
+    }
+
     // Check free tier limit for new members
     if (!isEdit && !checkAccess('add_member')) {
       setError(`Free plan is limited to ${FREE_MEMBER_LIMIT} members. Upgrade to add more.`)
@@ -111,9 +116,10 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
         updateMember(editMember.id, data)
         showToast(`${data.name} updated.`, 'success')
       } else {
+        const pos = spawnPosition ?? { x: 50 + members.length * 220, y: 50 }
         const { data, error: insertError } = await client
           .from('members')
-          .insert({ ...payload, position_x: 50 + members.length * 220, position_y: 50 })
+          .insert({ ...payload, position_x: Math.round(pos.x), position_y: Math.round(pos.y) })
           .select()
           .single()
         if (insertError) throw insertError

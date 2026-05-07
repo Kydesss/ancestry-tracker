@@ -22,33 +22,37 @@ export default function Auth() {
 
 function AuthCard({ mode, setMode }) {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex flex-col items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-modal border border-gray-100">
+        <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            {/* ambient warm gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-fixed/40 via-surface to-tertiary-fixed/30 pointer-events-none" />
+
+            <div className="relative w-full max-w-md bg-container-lowest rounded-md shadow-modal border border-outline-variant/60">
                 {/* Title inside the box */}
-                <div className="px-8 pt-8 pb-4">
-                    <h1 className="text-2xl font-bold text-primary-700 tracking-tight">
-                        AncestryTracker
+                <div className="px-8 pt-8 pb-4 text-center border-b border-outline-variant/50">
+                    <span className="label-meta block mb-1.5">A Digital Heirloom</span>
+                    <h1 className="font-serif text-2xl font-semibold text-primary tracking-tight">
+                        Rooted Heritage
                     </h1>
                 </div>
 
-                {/* Minimal underline-style tabs */}
-                <div className="flex border-b border-gray-200">
+                {/* Underline-style tabs */}
+                <div className="flex border-b border-outline-variant/50">
                     <button
                         onClick={() => setMode("signin")}
-                        className={`flex-1 px-4 py-3 text-sm font-medium transition-all ${
+                        className={`flex-1 px-4 py-3 font-sans text-sm font-semibold tracking-wide uppercase transition-all ${
                             mode === "signin"
-                                ? "text-gray-900 border-b-2 border-primary-600 -mb-px"
-                                : "text-gray-500 hover:text-gray-700"
+                                ? "text-ink border-b-2 border-primary -mb-px"
+                                : "text-ink-variant hover:text-ink"
                         }`}
                     >
                         Sign In
                     </button>
                     <button
                         onClick={() => setMode("signup")}
-                        className={`flex-1 px-4 py-3 text-sm font-medium transition-all ${
+                        className={`flex-1 px-4 py-3 font-sans text-sm font-semibold tracking-wide uppercase transition-all ${
                             mode === "signup"
-                                ? "text-gray-900 border-b-2 border-primary-600 -mb-px"
-                                : "text-gray-500 hover:text-gray-700"
+                                ? "text-ink border-b-2 border-primary -mb-px"
+                                : "text-ink-variant hover:text-ink"
                         }`}
                     >
                         Sign Up
@@ -72,7 +76,7 @@ function AuthCard({ mode, setMode }) {
                                     formFieldInput: "input",
                                     formFieldLabel: "label",
                                     footerActionLink:
-                                        "text-primary-600 font-medium hover:underline",
+                                        "text-tertiary-accent font-semibold hover:underline",
                                 },
                             }}
                         />
@@ -91,7 +95,7 @@ function AuthCard({ mode, setMode }) {
                                     formFieldInput: "input",
                                     formFieldLabel: "label",
                                     footerActionLink:
-                                        "text-primary-600 font-medium hover:underline",
+                                        "text-tertiary-accent font-semibold hover:underline",
                                 },
                             }}
                         />

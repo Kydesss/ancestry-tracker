@@ -3,39 +3,39 @@ import { Link } from 'react-router-dom'
 import { SignedIn, SignedOut } from '@clerk/clerk-react'
 
 const pricingTiers = [
-  {
-    name: 'Free Trial',
-    price: '$0',
-    period: 'forever',
-    description: 'Begin assembling your family record.',
-    features: [
-      'Build your own family tree',
-      'Up to 20 family members',
-      'Profile portraits & dates',
-      'Export as image',
-    ],
-    cta: 'Start Free',
-    href: '/auth',
-    highlighted: false,
-  },
-  {
-    name: 'Heirloom',
-    price: '$4.99',
-    period: 'per month',
-    description: 'For families gathering generations of stories.',
-    features: [
-      'Everything in Free',
-      'Unlimited family members',
-      'Invite family collaborators',
-      'Real-time edits',
-      'Shared trees',
-      'Priority support',
-    ],
-    cta: 'Begin Heirloom',
-    href: '/auth',
-    highlighted: true,
-  },
-]
+    {
+        name: "Free Trial",
+        price: "$0",
+        period: "forever",
+        description: "Begin assembling your family record.",
+        features: [
+            "Build your own family tree",
+            "Up to 20 family members",
+            "Profile portraits & dates",
+            "Export as image",
+        ],
+        cta: "Start Free",
+        href: "/auth",
+        highlighted: false,
+    },
+    {
+        name: "Heirloom",
+        price: "$4.99",
+        period: "per month",
+        description: "For families gathering generations of stories.",
+        features: [
+            "Everything in Free",
+            "Unlimited family members",
+            "Invite family collaborators",
+            "Real-time edits",
+            "Shared trees",
+            "Priority support",
+        ],
+        cta: "Begin Heirloom",
+        href: "/auth",
+        highlighted: true,
+    },
+];
 
 export default function Landing() {
   return (

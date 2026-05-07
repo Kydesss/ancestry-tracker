@@ -8,12 +8,12 @@ function PersonCard({ data }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   return (
-    <div className="bg-container-lowest rounded-md border border-outline-variant shadow-card hover:shadow-card-hover transition-all duration-300 w-52 relative group">
-      {/* React Flow handles */}
-      <Handle type="target" position={Position.Top} className="!bg-tertiary-accent !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-      <Handle type="source" position={Position.Bottom} className="!bg-tertiary-accent !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-      <Handle type="source" position={Position.Left} className="!bg-tertiary-accent !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-      <Handle type="target" position={Position.Right} className="!bg-tertiary-accent !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className="bg-container-lowest rounded-md border border-outline-variant shadow-card hover:shadow-card-hover focus-within:shadow-card-hover transition-all duration-300 w-52 relative group">
+      {/* React Flow handles — bg/size in .person-handle (CSS); visibility via Tailwind */}
+      <Handle type="target" position={Position.Top} className="person-handle opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Handle type="source" position={Position.Bottom} className="person-handle opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Handle type="source" position={Position.Left} className="person-handle opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Handle type="target" position={Position.Right} className="person-handle opacity-0 group-hover:opacity-100 transition-opacity" />
 
       <div className="p-4">
         {/* Avatar + name */}
@@ -30,18 +30,22 @@ function PersonCard({ data }) {
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Action buttons — visible at low opacity by default; full on hover/focus */}
+        <div className="flex justify-center gap-2 opacity-60 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(member)}
-            className="p-1.5 rounded bg-container-low hover:bg-primary-fixed text-ink-variant hover:text-primary transition-colors"
+            className="p-1.5 rounded bg-container-low hover:bg-primary-fixed text-ink-variant hover:text-primary
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 transition-colors"
+            aria-label={`Edit ${member.name}`}
             title="Edit person"
           >
             <PencilIcon />
           </button>
           <button
             onClick={() => setConfirmDelete(true)}
-            className="p-1.5 rounded bg-container-low hover:bg-danger-container text-ink-variant hover:text-danger-on-container transition-colors"
+            className="p-1.5 rounded bg-container-low hover:bg-danger-container text-ink-variant hover:text-danger-on-container
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-danger/40 transition-colors"
+            aria-label={`Remove ${member.name}`}
             title="Remove person"
           >
             <TrashIcon />
@@ -67,9 +71,13 @@ function PersonCard({ data }) {
         </button>
       </div>
 
-      {/* Delete confirmation dialog */}
+      {/* Delete confirmation dialog — solid surface, no glass */}
       {confirmDelete && (
-        <div className="absolute inset-0 bg-container-lowest/95 backdrop-blur-sm rounded-md flex flex-col items-center justify-center p-4 z-10">
+        <div
+          role="alertdialog"
+          aria-label={`Confirm removal of ${member.name}`}
+          className="absolute inset-0 bg-container-lowest border border-outline-variant rounded-md flex flex-col items-center justify-center p-4 z-10"
+        >
           <p className="font-serif text-sm font-semibold text-ink text-center mb-1">Remove {member.name}?</p>
           <p className="text-xs text-ink-variant text-center mb-4">This also removes all their relationships.</p>
           <div className="flex gap-2">

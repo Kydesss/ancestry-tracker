@@ -37,6 +37,7 @@ function DashboardInner() {
     const setRelationships = useStore((s) => s.setRelationships);
     const showToast = useStore((s) => s.showToast);
     const activeTree = useStore((s) => s.activeTree);
+    const members = useStore((s) => s.members);
     const { requirePremium } = useSubscription();
 
     useEffect(() => {
@@ -187,6 +188,9 @@ function DashboardInner() {
         setModalState((s) => ({ ...s, isOpen: false }));
     }
 
+    const showEmptyState =
+        !treeLoading && !bootstrapError && members.length === 0;
+
     return (
         <div className="flex h-screen overflow-hidden bg-surface text-ink">
             <Sidebar
@@ -195,16 +199,19 @@ function DashboardInner() {
             />
 
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-                {/* Mobile top bar */}
+                {/* Mobile top bar — hamburger only; tree name lives in sidebar */}
                 <div className="flex items-center h-14 px-4 border-b border-outline-variant/60 bg-container-lowest lg:hidden flex-shrink-0">
                     <button
                         onClick={() => setSidebarOpen(true)}
-                        className="p-2 rounded hover:bg-container-low text-ink-variant mr-3 transition-colors"
+                        className="p-2 -ml-2 rounded hover:bg-container-low text-ink-variant transition-colors
+                                   focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
+                        aria-label="Open sidebar"
                     >
                         <svg
                             className="w-5 h-5"
                             viewBox="0 0 20 20"
                             fill="currentColor"
+                            aria-hidden="true"
                         >
                             <path
                                 fillRule="evenodd"
@@ -213,35 +220,53 @@ function DashboardInner() {
                             />
                         </svg>
                     </button>
-                    <span className="font-serif text-base font-semibold text-ink">
+                    <span className="ml-3 font-serif text-base font-semibold text-ink truncate">
                         {activeTree?.name || "My Family Tree"}
                     </span>
                 </div>
 
-                {/* Tree title bar (desktop) */}
-                <div className="hidden lg:flex items-center h-14 px-6 border-b border-outline-variant/60 bg-container-lowest flex-shrink-0">
-                    <h1 className="font-serif text-lg font-semibold text-ink">
-                        {activeTree?.name || "My Family Tree"}
-                    </h1>
-                    <span className="ml-3 label-meta">
-                        An archive in progress
-                    </span>
-                </div>
+                {/* Canvas — single surface, no top chrome bars */}
+                <main
+                    className="flex-1 overflow-hidden relative"
+                    aria-label="Family tree canvas"
+                >
+                    <TreeCanvas
+                        onEdit={openEditModal}
+                        onAddPartner={(member) =>
+                            openAddModal({
+                                relationshipType: "partner",
+                                parentMember: member,
+                            })
+                        }
+                        onAddChild={(member) =>
+                            openAddModal({
+                                relationshipType: "child",
+                                parentMember: member,
+                            })
+                        }
+                        reactFlowRef={reactFlowRef}
+                    />
 
-                <Toolbar
-                    onAddRoot={() => openAddModal()}
-                    disabled={treeLoading || !activeTree}
-                />
+                    {/* Floating action cluster */}
+                    <Toolbar
+                        onAddRoot={() => openAddModal()}
+                        disabled={treeLoading || !activeTree}
+                    />
 
-                {/* Canvas */}
-                <div className="flex-1 overflow-hidden relative">
+                    {/* Empty-canvas onboarding — only after load, no error, zero members */}
+                    {showEmptyState && (
+                        <EmptyState onAdd={() => openAddModal()} />
+                    )}
+
+                    {/* Loading overlay */}
                     {treeLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-surface z-10">
+                        <div className="absolute inset-0 flex items-center justify-center bg-surface z-20">
                             <div className="flex flex-col items-center gap-3 text-ink-variant">
                                 <svg
                                     className="w-8 h-8 animate-spin text-primary"
                                     viewBox="0 0 24 24"
                                     fill="none"
+                                    aria-hidden="true"
                                 >
                                     <circle
                                         className="opacity-25"
@@ -263,14 +288,21 @@ function DashboardInner() {
                             </div>
                         </div>
                     )}
+
+                    {/* Bootstrap error overlay */}
                     {bootstrapError && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-surface z-10 p-6">
-                            <div className="bg-container-lowest rounded-md shadow-modal border border-danger-container p-7 max-w-md w-full text-center">
+                        <div className="absolute inset-0 flex items-center justify-center bg-surface z-20 p-6">
+                            <div
+                                role="alertdialog"
+                                aria-label="Archive could not be opened"
+                                className="bg-container-lowest rounded-md shadow-modal border border-danger-container p-7 max-w-md w-full text-center"
+                            >
                                 <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-danger-container text-danger flex items-center justify-center">
                                     <svg
                                         className="w-5 h-5"
                                         viewBox="0 0 20 20"
                                         fill="currentColor"
+                                        aria-hidden="true"
                                     >
                                         <path
                                             fillRule="evenodd"
@@ -294,23 +326,7 @@ function DashboardInner() {
                             </div>
                         </div>
                     )}
-                    <TreeCanvas
-                        onEdit={openEditModal}
-                        onAddPartner={(member) =>
-                            openAddModal({
-                                relationshipType: "partner",
-                                parentMember: member,
-                            })
-                        }
-                        onAddChild={(member) =>
-                            openAddModal({
-                                relationshipType: "child",
-                                parentMember: member,
-                            })
-                        }
-                        reactFlowRef={reactFlowRef}
-                    />
-                </div>
+                </main>
             </div>
 
             <PersonModal
@@ -322,6 +338,53 @@ function DashboardInner() {
                 spawnPosition={modalState.spawnPosition}
             />
             <UpgradeModal />
+        </div>
+    );
+}
+
+/* ── Empty canvas onboarding ───────────────────────────────────── */
+
+function EmptyState({ onAdd }) {
+    return (
+        <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center px-6">
+            <div className="pointer-events-auto max-w-md w-full text-center
+                            bg-container-lowest border border-outline-variant/60
+                            rounded-lg shadow-card px-8 py-9">
+                <div
+                    className="w-12 h-12 rounded-full bg-primary-fixed text-primary mx-auto mb-5
+                               flex items-center justify-center"
+                    aria-hidden="true"
+                >
+                    <svg
+                        className="w-6 h-6"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <path d="M12 22V14" />
+                        <circle cx="12" cy="10" r="4" />
+                        <circle cx="6" cy="6" r="2.5" />
+                        <circle cx="18" cy="6" r="2.5" />
+                        <path d="M6 8.5v2a2 2 0 002 2h1.5M18 8.5v2a2 2 0 01-2 2h-1.5" />
+                    </svg>
+                </div>
+                <h2 className="font-serif text-2xl font-semibold text-ink mb-2 leading-tight">
+                    Begin with someone you remember.
+                </h2>
+                <p className="text-sm text-ink-variant leading-relaxed mb-6 max-w-sm mx-auto">
+                    Add a parent, a grandparent, or yourself. The rest of the
+                    family follows from there — one person at a time.
+                </p>
+                <button
+                    onClick={onAdd}
+                    className="btn-primary text-sm px-5 py-2.5"
+                >
+                    Add the first person
+                </button>
+            </div>
         </div>
     );
 }

@@ -20,7 +20,7 @@ import { debounce } from "./debounce";
 const CARD_W = 208;
 const CARD_H_BASE = 200; // Height without death date
 const CARD_H_WITH_DOD = 240; // Height with death date
-const ALIGN_SNAP_PX = 40;
+const ALIGN_SNAP_PX = 60;
 
 // Calculate actual card height based on whether member has death date
 function getCardHeight(member) {
@@ -193,34 +193,45 @@ function sideHandlesFor(sourceId, targetId, posMap) {
     return { sourceHandle: "left", targetHandle: "right" };
 }
 
+/**
+ * Snap a dragged position to the SINGLE nearest neighbouring card.
+ * Picks the closest card by Euclidean distance, then snaps each axis to
+ * that one card if the per-axis delta is within ALIGN_SNAP_PX. Aligning
+ * to a single card avoids the prior bug where x and y could snap to
+ * different cards, producing positions that didn't visually line up
+ * with anything.
+ */
 function snapToNearbyCard(position, nodeId, nodes, members) {
-    const snapped = { ...position };
-
-    // Get the current node's member data
     const currentMember = members.find((m) => m.id === nodeId);
-    if (!currentMember) return snapped;
-
+    if (!currentMember) return position;
     const currentHeight = getCardHeight(currentMember);
     const currentCenterY = position.y + currentHeight / 2;
 
-    nodes
-        .filter((n) => n.id !== nodeId && !n.id.startsWith("family-"))
-        .forEach((n) => {
-            const otherMember = members.find((m) => m.id === n.id);
-            if (!otherMember) return;
-
-            const otherHeight = getCardHeight(otherMember);
-            const otherCenterY = n.position.y + otherHeight / 2;
-
-            const dx = Math.abs(n.position.x - position.x);
-            const dy = Math.abs(otherCenterY - currentCenterY);
-
-            if (dx <= ALIGN_SNAP_PX) snapped.x = n.position.x;
-            if (dy <= ALIGN_SNAP_PX)
-                snapped.y = otherCenterY - currentHeight / 2;
-        });
-
-    return snapped;
+    let nearest = null;
+    let nearestCenterY = 0;
+    let bestDistSq = Infinity;
+    for (const n of nodes) {
+        if (n.id === nodeId || n.id.startsWith("family-")) continue;
+        const otherMember = members.find((m) => m.id === n.id);
+        if (!otherMember) continue;
+        const otherHeight = getCardHeight(otherMember);
+        const otherCenterY = n.position.y + otherHeight / 2;
+        const dx = n.position.x - position.x;
+        const dy = otherCenterY - currentCenterY;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < bestDistSq) {
+            bestDistSq = distSq;
+            nearest = n;
+            nearestCenterY = otherCenterY;
+        }
+    }
+    if (!nearest) return position;
+    const adx = Math.abs(nearest.position.x - position.x);
+    const ady = Math.abs(nearestCenterY - currentCenterY);
+    return {
+        x: adx <= ALIGN_SNAP_PX ? nearest.position.x : position.x,
+        y: ady <= ALIGN_SNAP_PX ? nearestCenterY - currentHeight / 2 : position.y,
+    };
 }
 
 function buildGraph(members, relationships, callbacks, posMap) {
@@ -501,6 +512,21 @@ export default function TreeCanvas({
         const savedPosition = dragPosRef.current[node.id] ?? node.position;
         dragPosRef.current[node.id] = savedPosition;
         savePosition(node.id, savedPosition.x, savedPosition.y);
+
+        // Rebuild edges so partner-edge handles flip side based on the new
+        // x-positions (sideHandlesFor uses posMap to choose left/right).
+        const posMap = {};
+        members.forEach((m) => {
+            posMap[m.id] = { x: m.position_x ?? 0, y: m.position_y ?? 0 };
+        });
+        Object.assign(posMap, dragPosRef.current);
+        const { edges: rebuiltEdges } = buildGraph(
+            members,
+            relationships,
+            callbacks,
+            posMap,
+        );
+        setEdges(rebuiltEdges);
     }
 
     // Drag-to-connect between person cards

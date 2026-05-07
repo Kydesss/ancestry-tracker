@@ -118,6 +118,23 @@
     }
 }
 
+/* PersonCard handles — replaces inline `!` overrides on bg/size */
+.person-handle {
+  background: #a98e6e !important; /* tertiary-accent */
+  width: 0.625rem !important;
+  height: 0.625rem !important;
+}
+
+/* Respect prefers-reduced-motion: drop incidental motion, keep state-changes */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* React Flow overrides — Heritage palette */
 .react-flow__attribution {
     display: none;

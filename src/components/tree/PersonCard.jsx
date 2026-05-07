@@ -8,12 +8,14 @@ function PersonCard({ data }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   return (
-    <div className="bg-container-lowest rounded-md border border-outline-variant shadow-card hover:shadow-card-hover transition-all duration-300 w-52 relative group">
+    <div className="bg-container-lowest rounded-md border border-outline-variant shadow-card hover:shadow-card-hover focus-within:shadow-card-hover transition-all duration-300 w-52 relative group">
       {/* React Flow handles */}
-      <Handle type="target" position={Position.Top} className="!bg-tertiary-accent !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-      <Handle type="source" position={Position.Bottom} className="!bg-tertiary-accent !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-      <Handle type="source" position={Position.Left} className="!bg-tertiary-accent !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-      <Handle type="target" position={Position.Right} className="!bg-tertiary-accent !w-2.5 !h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Handle id="top" type="target" position={Position.Top} className="!bg-tertiary-accent !w-3 !h-3 opacity-60 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" />
+      <Handle id="bottom" type="source" position={Position.Bottom} className="!bg-tertiary-accent !w-3 !h-3 opacity-60 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" />
+      <Handle id="left" type="source" position={Position.Left} className="!bg-tertiary-accent !w-3 !h-3 opacity-60 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" />
+      <Handle id="left" type="target" position={Position.Left} className="!bg-tertiary-accent !w-3 !h-3 opacity-60 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" />
+      <Handle id="right" type="source" position={Position.Right} className="!bg-tertiary-accent !w-3 !h-3 opacity-60 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" />
+      <Handle id="right" type="target" position={Position.Right} className="!bg-tertiary-accent !w-3 !h-3 opacity-60 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" />
 
       <div className="p-4">
         {/* Avatar + name */}
@@ -31,17 +33,19 @@ function PersonCard({ data }) {
         </div>
 
         {/* Action buttons */}
-        <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex justify-center gap-2">
           <button
             onClick={() => onEdit(member)}
-            className="p-1.5 rounded bg-container-low hover:bg-primary-fixed text-ink-variant hover:text-primary transition-colors"
+            className="min-h-[36px] min-w-[36px] p-2 rounded bg-container-low hover:bg-primary-fixed focus:bg-primary-fixed text-ink-variant hover:text-primary focus:text-primary focus:outline-none focus:ring-2 focus:ring-primary-300 transition-colors"
+            aria-label={`Edit ${member.name}`}
             title="Edit person"
           >
             <PencilIcon />
           </button>
           <button
             onClick={() => setConfirmDelete(true)}
-            className="p-1.5 rounded bg-container-low hover:bg-danger-container text-ink-variant hover:text-danger-on-container transition-colors"
+            className="min-h-[36px] min-w-[36px] p-2 rounded bg-container-low hover:bg-danger-container focus:bg-danger-container text-ink-variant hover:text-danger-on-container focus:text-danger-on-container focus:outline-none focus:ring-2 focus:ring-danger/40 transition-colors"
+            aria-label={`Remove ${member.name}`}
             title="Remove person"
           >
             <TrashIcon />
@@ -53,14 +57,16 @@ function PersonCard({ data }) {
       <div className="border-t border-outline-variant/60 flex divide-x divide-outline-variant/60">
         <button
           onClick={() => onAddPartner(member)}
-          className="flex-1 py-2 text-xs font-semibold uppercase tracking-wide text-ink-variant hover:bg-container-low hover:text-primary transition-colors flex items-center justify-center gap-1"
+          className="flex-1 min-h-[44px] py-2 text-xs font-semibold uppercase tracking-wide text-ink-variant hover:bg-container-low hover:text-primary focus:bg-container-low focus:text-primary focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-300 transition-colors flex items-center justify-center gap-1"
+          aria-label={`Add partner for ${member.name}`}
           title="Add partner"
         >
           <span className="text-base leading-none">+</span> Partner
         </button>
         <button
           onClick={() => onAddChild(member)}
-          className="flex-1 py-2 text-xs font-semibold uppercase tracking-wide text-ink-variant hover:bg-container-low hover:text-primary transition-colors flex items-center justify-center gap-1"
+          className="flex-1 min-h-[44px] py-2 text-xs font-semibold uppercase tracking-wide text-ink-variant hover:bg-container-low hover:text-primary focus:bg-container-low focus:text-primary focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-300 transition-colors flex items-center justify-center gap-1"
+          aria-label={`Add child for ${member.name}`}
           title="Add child"
         >
           <span className="text-base leading-none">+</span> Child

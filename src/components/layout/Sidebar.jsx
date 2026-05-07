@@ -11,8 +11,9 @@ const navItems = [
         icon: ShareIcon,
         href: "/dashboard?view=shared",
         premium: true,
+        comingSoon: true,
     },
-    { label: "Settings", icon: SettingsIcon, href: "/dashboard?view=settings" },
+    { label: "Settings", icon: SettingsIcon, href: "/dashboard?view=settings", comingSoon: true },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -21,6 +22,7 @@ export default function Sidebar({ isOpen, onClose }) {
     const subscriptionTier = useStore((s) => s.subscriptionTier);
     const setShowUpgradeModal = useStore((s) => s.setShowUpgradeModal);
     const setUpgradeFeature = useStore((s) => s.setUpgradeFeature);
+    const showToast = useStore((s) => s.showToast);
     const { isPremium } = useSubscription();
 
     function handleSharedTrees(e) {
@@ -30,6 +32,11 @@ export default function Sidebar({ isOpen, onClose }) {
             setShowUpgradeModal(true);
             onClose?.();
         }
+    }
+
+    function handleComingSoon(label) {
+        showToast(`${label} will be available in a future version.`, "info");
+        onClose?.();
     }
 
     return (
@@ -114,40 +121,60 @@ export default function Sidebar({ isOpen, onClose }) {
 
                 {/* Nav */}
                 <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-                    {navItems.map(({ label, icon: Icon, href, premium }) => (
-                        <NavLink
-                            key={label}
-                            to={href}
-                            onClick={
-                                premium && !isPremium
-                                    ? handleSharedTrees
-                                    : onClose
-                            }
-                            className={({ isActive }) =>
-                                `flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold transition-colors ${
-                                    isActive
-                                        ? "bg-primary-fixed text-primary"
-                                        : "text-ink-variant hover:bg-container-low hover:text-ink"
-                                }`
-                            }
-                        >
-                            <Icon className="w-4 h-4 flex-shrink-0" />
-                            <span>{label}</span>
-                            {premium && !isPremium && (
-                                <svg
-                                    className="w-3.5 h-3.5 ml-auto text-tertiary-accent"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
+                    {navItems.map(({ label, icon: Icon, href, premium, comingSoon }) => {
+                        if (comingSoon) {
+                            return (
+                                <button
+                                    key={label}
+                                    type="button"
+                                    onClick={() => handleComingSoon(label)}
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded text-sm font-semibold text-ink-variant/70 transition-colors hover:bg-container-low hover:text-ink focus:bg-container-low focus:text-ink focus:outline-none focus:ring-2 focus:ring-primary-300"
+                                    aria-label={`${label} is coming soon`}
                                 >
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                            )}
-                        </NavLink>
-                    ))}
+                                    <Icon className="w-4 h-4 flex-shrink-0" />
+                                    <span>{label}</span>
+                                    <span className="ml-auto text-[11px] font-semibold uppercase tracking-wide text-ink-variant/70">
+                                        Soon
+                                    </span>
+                                </button>
+                            );
+                        }
+
+                        return (
+                            <NavLink
+                                key={label}
+                                to={href}
+                                onClick={
+                                    premium && !isPremium
+                                        ? handleSharedTrees
+                                        : onClose
+                                }
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold transition-colors ${
+                                        isActive
+                                            ? "bg-primary-fixed text-primary"
+                                            : "text-ink-variant hover:bg-container-low hover:text-ink"
+                                    }`
+                                }
+                            >
+                                <Icon className="w-4 h-4 flex-shrink-0" />
+                                <span>{label}</span>
+                                {premium && !isPremium && (
+                                    <svg
+                                        className="w-3.5 h-3.5 ml-auto text-tertiary-accent"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                )}
+                            </NavLink>
+                        );
+                    })}
 
                     {!isPremium && (
                         <button

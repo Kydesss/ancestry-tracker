@@ -63,7 +63,7 @@ export default function UpgradeModal() {
         </div>
 
         <button onClick={handleUpgrade} className="btn-primary w-full justify-center text-base py-3 mb-3">
-          Begin Heirloom — $4.99/mo
+          Begin Heirloom, $4.99/mo
         </button>
         <button
           onClick={() => setShowUpgradeModal(false)}

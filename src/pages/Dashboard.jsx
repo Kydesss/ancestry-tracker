@@ -37,6 +37,7 @@ function DashboardInner() {
     const setRelationships = useStore((s) => s.setRelationships);
     const showToast = useStore((s) => s.showToast);
     const activeTree = useStore((s) => s.activeTree);
+    const members = useStore((s) => s.members);
     const { requirePremium } = useSubscription();
 
     useEffect(() => {
@@ -62,7 +63,7 @@ function DashboardInner() {
             const token = await getToken({ template: "supabase" });
             if (!token)
                 throw new Error(
-                    'Could not get Supabase token from Clerk. Make sure the "supabase" JWT template exists in your Clerk dashboard.',
+                    "We could not open your family record because sign-in is not fully connected. Please try again in a moment.",
                 );
 
             const client = getAuthenticatedClient(token);
@@ -77,7 +78,7 @@ function DashboardInner() {
                     { onConflict: "id", ignoreDuplicates: false },
                 );
             if (upsertErr)
-                throw new Error(`User sync failed: ${upsertErr.message}`);
+                throw new Error("We could not prepare your account for this family record.");
 
             const { data: userData } = await client
                 .from("users")
@@ -93,7 +94,7 @@ function DashboardInner() {
                 .order("created_at")
                 .limit(1);
             if (treesErr)
-                throw new Error(`Failed to fetch trees: ${treesErr.message}`);
+                throw new Error("We could not find your family tree.");
 
             let tree = trees?.[0];
             if (!tree) {
@@ -107,7 +108,7 @@ function DashboardInner() {
                     .single();
                 if (insertErr)
                     throw new Error(
-                        `Failed to create tree: ${insertErr.message}`,
+                        "We could not create your first family tree.",
                     );
                 tree = newTree;
             }
@@ -231,6 +232,7 @@ function DashboardInner() {
                 <Toolbar
                     onAddRoot={() => openAddModal()}
                     disabled={treeLoading || !activeTree}
+                    isEmpty={members.length === 0}
                 />
 
                 {/* Canvas */}
@@ -258,7 +260,7 @@ function DashboardInner() {
                                     />
                                 </svg>
                                 <span className="font-serif italic text-sm">
-                                    Composing your archive…
+                                    Opening your family record...
                                 </span>
                             </div>
                         </div>
@@ -282,7 +284,7 @@ function DashboardInner() {
                                 <h3 className="font-serif text-lg font-semibold text-ink mb-2">
                                     Could not open your archive
                                 </h3>
-                                <p className="text-sm text-danger-on-container bg-danger-container/60 rounded px-3 py-2 mb-5 text-left font-mono break-all">
+                                <p className="text-sm leading-6 text-danger-on-container bg-danger-container/60 rounded px-3 py-2 mb-5 text-left">
                                     {bootstrapError}
                                 </p>
                                 <button
@@ -296,6 +298,7 @@ function DashboardInner() {
                     )}
                     <TreeCanvas
                         onEdit={openEditModal}
+                        onAddRoot={() => openAddModal()}
                         onAddPartner={(member) =>
                             openAddModal({
                                 relationshipType: "partner",

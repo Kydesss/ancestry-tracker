@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ReactFlow, {
   Background,
   Controls,
@@ -19,6 +19,7 @@ import { debounce } from './debounce'
 // Approximate card dimensions (w-52 = 208px, ~240px tall)
 const CARD_W = 208
 const CARD_H = 240
+const ALIGN_SNAP_PX = 40
 
 // ─── Family node ─────────────────────────────────────────────────────────────
 // A small dot that sits between two partners and acts as the shared origin
@@ -74,7 +75,8 @@ function computeFamilyGroups(relationships) {
   relationships
     .filter((r) => r.type === 'child')
     .forEach((r) => {
-      ;(childParents[r.to_member_id] = childParents[r.to_member_id] || []).push(r.from_member_id)
+      childParents[r.to_member_id] = childParents[r.to_member_id] || []
+      childParents[r.to_member_id].push(r.from_member_id)
     })
 
   const familyGroups = {}
@@ -117,6 +119,31 @@ function familyNodePos(p1Id, p2Id, posMap) {
   }
 }
 
+function sideHandlesFor(sourceId, targetId, posMap) {
+  const source = posMap[sourceId] ?? { x: 0, y: 0 }
+  const target = posMap[targetId] ?? { x: 0, y: 0 }
+  if (source.x <= target.x) {
+    return { sourceHandle: 'right', targetHandle: 'left' }
+  }
+  return { sourceHandle: 'left', targetHandle: 'right' }
+}
+
+function snapToNearbyCard(position, nodeId, nodes) {
+  const snapped = { ...position }
+
+  nodes
+    .filter((n) => n.id !== nodeId && !n.id.startsWith('family-'))
+    .forEach((n) => {
+      const dx = Math.abs(n.position.x - position.x)
+      const dy = Math.abs(n.position.y - position.y)
+
+      if (dx <= ALIGN_SNAP_PX) snapped.x = n.position.x
+      if (dy <= ALIGN_SNAP_PX) snapped.y = n.position.y
+    })
+
+  return snapped
+}
+
 function buildGraph(members, relationships, callbacks, posMap) {
   const { familyGroups, handledRelIds } = computeFamilyGroups(relationships)
 
@@ -148,20 +175,27 @@ function buildGraph(members, relationships, callbacks, posMap) {
       const key = [r.from_member_id, r.to_member_id].sort().join('|')
       return !familyPartnerKeys.has(key) // drop partner edge when family node exists
     })
-    .map((r) => ({
-      id: r.id,
-      source: r.from_member_id,
-      target: r.to_member_id,
-      type: 'smoothstep',
-      style:
-        r.type === 'partner'
-          ? { stroke: '#a98e6e', strokeDasharray: '6 4', strokeWidth: 1.5 }
-          : { stroke: '#434843', strokeWidth: 1.5 },
-      markerEnd:
-        r.type === 'child'
-          ? { type: MarkerType.ArrowClosed, color: '#434843', width: 14, height: 14 }
-          : undefined,
-    }))
+    .map((r) => {
+      const partnerHandles = r.type === 'partner'
+        ? sideHandlesFor(r.from_member_id, r.to_member_id, posMap)
+        : {}
+
+      return {
+        id: r.id,
+        source: r.from_member_id,
+        target: r.to_member_id,
+        ...partnerHandles,
+        type: r.type === 'partner' ? 'straight' : 'smoothstep',
+        style:
+          r.type === 'partner'
+            ? { stroke: '#a98e6e', strokeDasharray: '6 4', strokeWidth: 1.5 }
+            : { stroke: '#434843', strokeWidth: 1.5 },
+        markerEnd:
+          r.type === 'child'
+            ? { type: MarkerType.ArrowClosed, color: '#434843', width: 14, height: 14 }
+            : undefined,
+      }
+    })
 
   const familyEdgeList = []
   Object.entries(familyGroups).forEach(([coupleKey, { p1Id, p2Id, childIds }]) => {
@@ -170,17 +204,19 @@ function buildGraph(members, relationships, callbacks, posMap) {
     familyEdgeList.push({
       id: `${fnId}-from-${p1Id}`,
       source: p1Id,
+      sourceHandle: 'bottom',
       target: fnId,
-      targetHandle: 'left',
-      type: 'smoothstep',
+      targetHandle: 'top',
+      type: 'straight',
       style: { stroke: '#a98e6e', strokeWidth: 1.5 },
     })
     familyEdgeList.push({
       id: `${fnId}-from-${p2Id}`,
       source: p2Id,
+      sourceHandle: 'bottom',
       target: fnId,
-      targetHandle: 'right',
-      type: 'smoothstep',
+      targetHandle: 'top',
+      type: 'straight',
       style: { stroke: '#a98e6e', strokeWidth: 1.5 },
     })
     // Family dot → each child (blue arrow)
@@ -190,6 +226,7 @@ function buildGraph(members, relationships, callbacks, posMap) {
         source: fnId,
         sourceHandle: 'bottom',
         target: childId,
+        targetHandle: 'top',
         type: 'smoothstep',
         style: { stroke: '#434843', strokeWidth: 1.5 },
         markerEnd: { type: MarkerType.ArrowClosed, color: '#434843', width: 14, height: 14 },
@@ -205,7 +242,7 @@ function buildGraph(members, relationships, callbacks, posMap) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function TreeCanvas({ onEdit, onAddPartner, onAddChild, reactFlowRef }) {
+export default function TreeCanvas({ onEdit, onAddRoot, onAddPartner, onAddChild, reactFlowRef }) {
   const members = useStore((s) => s.members)
   const relationships = useStore((s) => s.relationships)
   const removeMember = useStore((s) => s.removeMember)
@@ -217,6 +254,7 @@ export default function TreeCanvas({ onEdit, onAddPartner, onAddChild, reactFlow
   const [connectModal, setConnectModal] = useState({ isOpen: false, sourceId: null, targetId: null })
   // Track dragged positions so rebuilds don't reset cards back to DB values
   const dragPosRef = useRef({})
+  const shiftPressedRef = useRef(false)
 
   const callbacks = { onEdit, onAddPartner, onAddChild, onDelete: handleDelete }
 
@@ -234,10 +272,42 @@ export default function TreeCanvas({ onEdit, onAddPartner, onAddChild, reactFlow
     setEdges(newEdges)
   }, [members, relationships]) // eslint-disable-line
 
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === 'Shift') shiftPressedRef.current = true
+    }
+    function handleKeyUp(event) {
+      if (event.key === 'Shift') shiftPressedRef.current = false
+    }
+    function handleBlur() {
+      shiftPressedRef.current = false
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('blur', handleBlur)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('blur', handleBlur)
+    }
+  }, [])
+
   // Keep family node positions live while dragging a parent card
   function handleNodesChange(changes) {
-    onNodesChange(changes)
-    const movingNodes = changes.filter((c) => c.type === 'position' && c.dragging && c.position)
+    const nextChanges = shiftPressedRef.current
+      ? changes.map((change) => {
+          if (change.type !== 'position' || !change.dragging || !change.position) return change
+          return {
+            ...change,
+            position: snapToNearbyCard(change.position, change.id, nodes),
+          }
+        })
+      : changes
+
+    onNodesChange(nextChanges)
+    const movingNodes = nextChanges.filter((c) => c.type === 'position' && c.dragging && c.position)
     if (!movingNodes.length) return
     // Update dragPosRef with latest positions
     movingNodes.forEach((c) => { dragPosRef.current[c.id] = c.position })
@@ -258,8 +328,8 @@ export default function TreeCanvas({ onEdit, onAddPartner, onAddChild, reactFlow
   }
 
   // Debounced position save
-  const savePosition = useCallback(
-    debounce(async (id, x, y) => {
+  const savePosition = useMemo(
+    () => debounce(async (id, x, y) => {
       try {
         const token = await getToken({ template: 'supabase' })
         const client = getAuthenticatedClient(token)
@@ -367,7 +437,7 @@ export default function TreeCanvas({ onEdit, onAddPartner, onAddChild, reactFlow
   const targetMember = members.find((m) => m.id === connectModal.targetId)
 
   return (
-    <div className="flex-1 h-full" ref={reactFlowRef}>
+    <div className="flex-1 h-full relative" ref={reactFlowRef}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -387,6 +457,28 @@ export default function TreeCanvas({ onEdit, onAddPartner, onAddChild, reactFlow
         <Background color="#c3c8c1" gap={28} size={1} />
         <Controls showInteractive={false} />
       </ReactFlow>
+
+      {members.length === 0 && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center px-5 pointer-events-none">
+          <div className="max-w-lg rounded-md border border-outline-variant/70 bg-container-lowest/95 p-6 text-center shadow-modal pointer-events-auto">
+            <span className="label-meta text-tertiary-accent">Begin the family record</span>
+            <h2 className="mt-2 font-serif text-headline-md font-semibold text-ink">
+              Start with one person you know well.
+            </h2>
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-ink-variant">
+              Add yourself, a parent, or a grandparent. Once the first person is here, you can add partners and children from their card.
+            </p>
+            <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <button type="button" onClick={onAddRoot} className="btn-primary">
+                Add first person
+              </button>
+              <p className="text-xs text-ink-variant">
+                You can move each card later.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConnectModal
         isOpen={connectModal.isOpen}

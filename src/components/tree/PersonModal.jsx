@@ -19,7 +19,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
-  const { getToken } = useAuth()
+  const { getToken, userId } = useAuth()
   const activeTree = useStore((s) => s.activeTree)
   const addMember = useStore((s) => s.addMember)
   const updateMember = useStore((s) => s.updateMember)
@@ -50,6 +50,15 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
     }
   }, [isOpen, editMember, relationshipType])
 
+  useEffect(() => {
+    if (!isOpen) return
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   function set(key, value) {
@@ -68,13 +77,13 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
     if (!form.name || !form.dob) return
 
     if (!activeTree) {
-      setError('Tree is still loading — please wait a moment and try again.')
+      setError('Your family tree is still opening. Please wait a moment and try again.')
       return
     }
 
     // Check free tier limit for new members
     if (!isEdit && !checkAccess('add_member')) {
-      setError(`Free plan is limited to ${FREE_MEMBER_LIMIT} members. Upgrade to add more.`)
+      setError(`The free plan includes ${FREE_MEMBER_LIMIT} people. Upgrade when your family record is ready to grow further.`)
       return
     }
 
@@ -86,15 +95,18 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
       const client = getAuthenticatedClient(token)
 
       let photo_url = editMember?.photo_url || null
+      const newMemberId = !isEdit && form.photo ? crypto.randomUUID() : null
 
       // Upload photo if a new file was selected
       if (form.photo) {
-        const memberId = editMember?.id || crypto.randomUUID()
-        const { data: uploadData, error: uploadError } = await client.storage
+        if (!userId) throw new Error('Please sign in again before adding a portrait.')
+        const memberId = editMember?.id || newMemberId
+        const avatarPath = `${userId}/${memberId}`
+        const { error: uploadError } = await client.storage
           .from('avatars')
-          .upload(`${memberId}`, form.photo, { upsert: true })
+          .upload(avatarPath, form.photo, { upsert: true })
         if (uploadError) throw uploadError
-        const { data: urlData } = client.storage.from('avatars').getPublicUrl(`${memberId}`)
+        const { data: urlData } = client.storage.from('avatars').getPublicUrl(avatarPath)
         photo_url = urlData.publicUrl
       }
 
@@ -120,7 +132,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
         const pos = spawnPosition ?? { x: 50 + members.length * 220, y: 50 }
         const { data, error: insertError } = await client
           .from('members')
-          .insert({ ...payload, position_x: Math.round(pos.x), position_y: Math.round(pos.y) })
+          .insert({ ...payload, ...(newMemberId ? { id: newMemberId } : {}), position_x: Math.round(pos.x), position_y: Math.round(pos.y) })
           .select()
           .single()
         if (insertError) throw insertError
@@ -185,7 +197,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
 
       onClose()
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.')
+      setError(err.message || 'We could not save this person. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -204,7 +216,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
               {isEdit ? 'Edit Person' : 'Add Person'}
             </h2>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-container-low text-ink-variant hover:text-ink transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded hover:bg-container-low focus:bg-container-low text-ink-variant hover:text-ink focus:text-ink focus:outline-none focus:ring-2 focus:ring-primary-300 transition-colors" aria-label="Close person form">
             <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
@@ -212,7 +224,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+        <form id="person-form" onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Profile Photo */}
           <div>
             <label className="label">Portrait</label>
@@ -227,7 +239,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
                 </div>
               )}
               <label className="btn-secondary text-xs cursor-pointer">
-                Choose Photo
+                Choose photo
                 <input type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} />
               </label>
             </div>
@@ -241,7 +253,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
               type="text"
               value={form.name}
               onChange={(e) => set('name', e.target.value)}
-              placeholder="e.g. Jane Smith"
+              placeholder="Jane Smith"
               required
             />
           </div>
@@ -301,7 +313,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
           )}
 
           {error && (
-            <p className="text-sm text-danger-on-container bg-danger-container/60 rounded px-3 py-2">{error}</p>
+            <p className="text-sm leading-6 text-danger-on-container bg-danger-container/60 rounded px-3 py-2">{error}</p>
           )}
         </form>
 
@@ -313,11 +325,10 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
           <button
             type="submit"
             form="person-form"
-            onClick={handleSubmit}
             disabled={saving || !form.name || !form.dob}
             className="btn-primary"
           >
-            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Person'}
+            {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Person'}
           </button>
         </div>
       </div>

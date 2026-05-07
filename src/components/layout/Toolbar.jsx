@@ -1,10 +1,8 @@
 import { useSubscription } from "../../hooks/useSubscription";
 import useStore from "../../store/useStore";
 
-export default function Toolbar({ onAddRoot, disabled = false }) {
+export default function Toolbar({ onAddRoot, disabled = false, isEmpty = false }) {
     const { requirePremium } = useSubscription();
-    const setShowUpgradeModal = useStore((s) => s.setShowUpgradeModal);
-    const setUpgradeFeature = useStore((s) => s.setUpgradeFeature);
     const showToast = useStore((s) => s.showToast);
 
     function handleShare() {
@@ -32,7 +30,7 @@ export default function Toolbar({ onAddRoot, disabled = false }) {
                             clipRule="evenodd"
                         />
                     </svg>
-                    Add Root Person
+                    {isEmpty ? 'Add first person' : 'Add person'}
                 </button>
             </div>
 

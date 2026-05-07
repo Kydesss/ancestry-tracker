@@ -3,133 +3,142 @@
 @tailwind utilities;
 
 @layer base {
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
 
-  html {
-    font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    color: #1b1c1c;
-  }
+    html {
+        font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        color: #1b1c1c;
+    }
 
-  body {
-    margin: 0;
-    min-height: 100vh;
-    background-color: #fbf9f8;
-    color: #1b1c1c;
-    font-size: 16px;
-    line-height: 1.5;
-  }
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background-color: #fbf9f8;
+        color: #1b1c1c;
+        font-size: 16px;
+        line-height: 1.5;
+    }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Newsreader', ui-serif, Georgia, serif;
-    color: #1b1c1c;
-    letter-spacing: -0.01em;
-  }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: "Newsreader", ui-serif, Georgia, serif;
+        color: #1b1c1c;
+        letter-spacing: -0.01em;
+    }
 }
 
 @layer components {
-  /* ── Buttons ────────────────────────────────────────────── */
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded
+    /* ── Buttons ────────────────────────────────────────────── */
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded
       bg-primary text-primary-on font-semibold text-sm leading-5
       shadow-embossed
       hover:bg-primary-700 hover:shadow-card-hover
       focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:ring-offset-surface
       transition-all duration-200
       disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
-  }
-  .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded
+    }
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded
       bg-transparent text-tertiary-accent font-semibold text-sm leading-5
       border border-tertiary-accent
       hover:bg-tertiary-fixed hover:text-tertiary-on-container
       focus:outline-none focus:ring-2 focus:ring-tertiary-accent/40 focus:ring-offset-2 focus:ring-offset-surface
       transition-all duration-200
       disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-  .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded
+    }
+    .btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded
       text-ink-variant font-medium text-sm
       hover:bg-container-low hover:text-ink
       focus:outline-none focus:ring-2 focus:ring-primary-300
       transition-colors;
-  }
+    }
 
-  /* ── Inputs ─────────────────────────────────────────────── */
-  .input {
-    @apply block w-full rounded
+    /* ── Inputs ─────────────────────────────────────────────── */
+    .input {
+        @apply block w-full rounded
       border border-outline-variant bg-container-lowest
       px-3.5 py-2.5 text-sm text-ink
       shadow-inset-paper placeholder:text-ink-variant/60
       focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary
       transition-colors;
-  }
-  .label {
-    @apply block font-sans text-label-sm uppercase text-ink-variant mb-1.5;
-  }
+    }
+    .label {
+        @apply block font-sans text-label-sm uppercase text-ink-variant mb-1.5;
+    }
 
-  /* ── Cards (Artifacts) ──────────────────────────────────── */
-  .card {
-    @apply bg-container-lowest rounded-md border border-outline-variant/60
+    /* ── Cards (Artifacts) ──────────────────────────────────── */
+    .card {
+        @apply bg-container-lowest rounded-md border border-outline-variant/60
       shadow-card p-5;
-  }
-  .card-hover {
-    @apply hover:shadow-card-hover hover:-translate-y-0.5
+    }
+    .card-hover {
+        @apply hover:shadow-card-hover hover:-translate-y-0.5
       transition-all duration-300 ease-out;
-  }
+    }
 
-  /* ── Chips / Tags ───────────────────────────────────────── */
-  .chip {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full
+    /* ── Chips / Tags ───────────────────────────────────────── */
+    .chip {
+        @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full
       text-xs font-semibold tracking-wide;
-  }
-  .chip-primary {
-    @apply chip bg-primary-fixed text-primary-700;
-  }
-  .chip-tertiary {
-    @apply chip bg-tertiary-fixed text-tertiary-on-container;
-  }
-  .chip-neutral {
-    @apply chip bg-container-high text-ink-variant;
-  }
+    }
+    .chip-primary {
+        @apply chip bg-primary-fixed text-primary-700;
+    }
+    .chip-tertiary {
+        @apply chip bg-tertiary-fixed text-tertiary-on-container;
+    }
+    .chip-neutral {
+        @apply chip bg-container-high text-ink-variant;
+    }
 
-  /* ── Headings ───────────────────────────────────────────── */
-  .h-display {
-    @apply font-serif text-display-lg text-ink;
-  }
-  .h-headline {
-    @apply font-serif text-headline-lg text-ink;
-  }
-  .h-headline-md {
-    @apply font-serif text-headline-md text-ink;
-  }
-  .label-meta {
-    @apply font-sans text-label-sm uppercase tracking-wider text-ink-variant;
-  }
+    /* ── Headings ───────────────────────────────────────────── */
+    .h-display {
+        @apply font-serif text-display-lg text-ink;
+    }
+    .h-headline {
+        @apply font-serif text-headline-lg text-ink;
+    }
+    .h-headline-md {
+        @apply font-serif text-headline-md text-ink;
+    }
+    .label-meta {
+        @apply font-sans text-label-sm uppercase tracking-wider text-ink-variant;
+    }
 }
 
 /* React Flow overrides — Heritage palette */
 .react-flow__attribution {
-  display: none;
+    display: none;
 }
 .react-flow__background {
-  background-color: #fbf9f8;
+    background-color: #fbf9f8;
 }
 .react-flow__controls {
-  background: #ffffff;
-  border: 1px solid #c3c8c1 !important;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px rgba(6,27,14,0.04), 0 2px 8px rgba(6,27,14,0.05);
+    background: #ffffff;
+    border: 1px solid #c3c8c1 !important;
+    border-radius: 0.5rem;
+    box-shadow:
+        0 1px 2px rgba(6, 27, 14, 0.04),
+        0 2px 8px rgba(6, 27, 14, 0.05);
 }
 .react-flow__controls button {
-  background: #ffffff;
-  color: #434843;
-  border-bottom: 1px solid #e4e2e2 !important;
+    background: #ffffff;
+    color: #434843;
+    border-bottom: 1px solid #e4e2e2 !important;
 }
 .react-flow__controls button:hover {
-  background: #f5f3f3;
-  color: #061b0e;
+    background: #f5f3f3;
+    color: #061b0e;
 }

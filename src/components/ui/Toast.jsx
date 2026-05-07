@@ -1,22 +1,30 @@
-import { useEffect } from 'react'
 import useStore from '../../store/useStore'
 
-const icons = {
-  success: (
-    <svg className="w-5 h-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-    </svg>
-  ),
-  error: (
-    <svg className="w-5 h-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-    </svg>
-  ),
-  info: (
-    <svg className="w-5 h-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-    </svg>
-  ),
+const tones = {
+  success: {
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+      </svg>
+    ),
+    cls: 'text-primary',
+  },
+  error: {
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+      </svg>
+    ),
+    cls: 'text-danger',
+  },
+  info: {
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+      </svg>
+    ),
+    cls: 'text-tertiary-accent',
+  },
 }
 
 export default function Toast() {
@@ -24,15 +32,16 @@ export default function Toast() {
   const clearToast = useStore((s) => s.clearToast)
 
   if (!toast) return null
+  const tone = tones[toast.type] || tones.info
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] animate-fade-in">
-      <div className="flex items-center gap-3 bg-white border border-gray-200 shadow-modal rounded-xl px-4 py-3 min-w-[260px] max-w-sm">
-        {icons[toast.type] || icons.info}
-        <p className="text-sm text-gray-800 flex-1">{toast.message}</p>
+      <div className="flex items-center gap-3 bg-container-lowest border border-outline-variant shadow-modal rounded-md px-4 py-3 min-w-[260px] max-w-sm">
+        <span className={tone.cls}>{tone.icon}</span>
+        <p className="font-sans text-sm text-ink flex-1">{toast.message}</p>
         <button
           onClick={clearToast}
-          className="text-gray-400 hover:text-gray-600 ml-1"
+          className="text-ink-variant hover:text-ink ml-1 transition-colors"
           aria-label="Close"
         >
           <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">

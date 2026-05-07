@@ -30,9 +30,9 @@ function FamilyNode() {
         width: 14,
         height: 14,
         borderRadius: '50%',
-        background: '#6b7280',
-        border: '2.5px solid #9ca3af',
-        boxShadow: '0 0 0 3px #f3f4f6',
+        background: '#a98e6e', // tertiary-accent (heritage bronze)
+        border: '2.5px solid #3a2810', // tertiary-container
+        boxShadow: '0 0 0 3px rgba(251,249,248,1)',
       }}
     >
       <Handle id="left"   type="target" position={Position.Left}   style={{ opacity: 0, width: 1, height: 1, minWidth: 0, minHeight: 0 }} />
@@ -155,11 +155,11 @@ function buildGraph(members, relationships, callbacks, posMap) {
       type: 'smoothstep',
       style:
         r.type === 'partner'
-          ? { stroke: '#9ca3af', strokeDasharray: '6 3', strokeWidth: 2 }
-          : { stroke: '#2563eb', strokeWidth: 2 },
+          ? { stroke: '#a98e6e', strokeDasharray: '6 4', strokeWidth: 1.5 }
+          : { stroke: '#434843', strokeWidth: 1.5 },
       markerEnd:
         r.type === 'child'
-          ? { type: MarkerType.ArrowClosed, color: '#2563eb', width: 16, height: 16 }
+          ? { type: MarkerType.ArrowClosed, color: '#434843', width: 14, height: 14 }
           : undefined,
     }))
 
@@ -173,7 +173,7 @@ function buildGraph(members, relationships, callbacks, posMap) {
       target: fnId,
       targetHandle: 'left',
       type: 'smoothstep',
-      style: { stroke: '#9ca3af', strokeWidth: 2 },
+      style: { stroke: '#a98e6e', strokeWidth: 1.5 },
     })
     familyEdgeList.push({
       id: `${fnId}-from-${p2Id}`,
@@ -181,7 +181,7 @@ function buildGraph(members, relationships, callbacks, posMap) {
       target: fnId,
       targetHandle: 'right',
       type: 'smoothstep',
-      style: { stroke: '#9ca3af', strokeWidth: 2 },
+      style: { stroke: '#a98e6e', strokeWidth: 1.5 },
     })
     // Family dot → each child (blue arrow)
     childIds.forEach((childId) => {
@@ -191,8 +191,8 @@ function buildGraph(members, relationships, callbacks, posMap) {
         sourceHandle: 'bottom',
         target: childId,
         type: 'smoothstep',
-        style: { stroke: '#2563eb', strokeWidth: 2 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#2563eb', width: 16, height: 16 },
+        style: { stroke: '#434843', strokeWidth: 1.5 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#434843', width: 14, height: 14 },
       })
     })
   })
@@ -381,11 +381,11 @@ export default function TreeCanvas({ onEdit, onAddPartner, onAddChild, reactFlow
         minZoom={0.2}
         maxZoom={2}
         deleteKeyCode={null}
-        connectionLineStyle={{ stroke: '#6366f1', strokeWidth: 2, strokeDasharray: '6 3' }}
+        connectionLineStyle={{ stroke: '#4d6453', strokeWidth: 2, strokeDasharray: '6 3' }}
         connectionLineType="smoothstep"
       >
-        <Background color="#e5e7eb" gap={24} size={1} />
-        <Controls showInteractive={false} className="bg-white shadow-card border border-gray-100 rounded-xl overflow-hidden" />
+        <Background color="#c3c8c1" gap={28} size={1} />
+        <Controls showInteractive={false} />
       </ReactFlow>
 
       <ConnectModal

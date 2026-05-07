@@ -193,15 +193,18 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-white rounded-2xl shadow-modal max-w-md w-full z-10 overflow-hidden">
+      <div className="relative bg-container-lowest rounded-md shadow-modal max-w-md w-full z-10 overflow-hidden border border-outline-variant/60">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {isEdit ? 'Edit Person' : 'Add Person'}
-          </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/60">
+          <div>
+            <span className="label-meta block mb-0.5">{isEdit ? 'Update Record' : 'New Record'}</span>
+            <h2 className="font-serif text-headline-md font-semibold text-ink">
+              {isEdit ? 'Edit Person' : 'Add Person'}
+            </h2>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded hover:bg-container-low text-ink-variant hover:text-ink transition-colors">
             <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
@@ -209,16 +212,16 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Profile Photo */}
           <div>
-            <label className="label">Profile Photo</label>
+            <label className="label">Portrait</label>
             <div className="flex items-center gap-4">
               {form.photoPreview ? (
-                <img src={form.photoPreview} alt="Preview" className="w-14 h-14 rounded-full object-cover border border-gray-200" />
+                <img src={form.photoPreview} alt="Preview" className="w-16 h-16 rounded-md object-cover border border-outline-variant shadow-card" />
               ) : (
-                <div className="w-14 h-14 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">
-                  <svg className="w-6 h-6" viewBox="0 0 20 20" fill="currentColor">
+                <div className="w-16 h-16 rounded-md bg-container-low border border-outline-variant flex items-center justify-center text-ink-variant">
+                  <svg className="w-7 h-7" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -232,7 +235,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
 
           {/* Name */}
           <div>
-            <label className="label">Full Name <span className="text-red-500">*</span></label>
+            <label className="label">Full Name <span className="text-danger">*</span></label>
             <input
               className="input"
               type="text"
@@ -245,7 +248,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
 
           {/* Date of Birth */}
           <div>
-            <label className="label">Date of Birth <span className="text-red-500">*</span></label>
+            <label className="label">Date of Birth <span className="text-danger">*</span></label>
             <input
               className="input"
               type="date"
@@ -262,9 +265,9 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
               type="checkbox"
               checked={form.isDeceased}
               onChange={(e) => set('isDeceased', e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              className="w-4 h-4 rounded border-outline text-primary focus:ring-primary-300"
             />
-            <label htmlFor="deceased" className="text-sm text-gray-700 cursor-pointer">
+            <label htmlFor="deceased" className="text-sm text-ink-variant cursor-pointer">
               Mark as deceased
             </label>
           </div>
@@ -272,7 +275,7 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
           {/* Date of Death */}
           {form.isDeceased && (
             <div>
-              <label className="label">Date of Death</label>
+              <label className="label">Date of Passing</label>
               <input
                 className="input"
                 type="date"
@@ -298,12 +301,12 @@ export default function PersonModal({ isOpen, onClose, editMember, relationshipT
           )}
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+            <p className="text-sm text-danger-on-container bg-danger-container/60 rounded px-3 py-2">{error}</p>
           )}
         </form>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-outline-variant/60 bg-container-low">
           <button type="button" onClick={onClose} className="btn-secondary">
             Cancel
           </button>
